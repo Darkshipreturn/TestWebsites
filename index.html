@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="https://pbsi.xyz/style.css">
+    <title>Player Stats</title>
+    <script>
+        // Fetch randomProfiles when the page loads
+        async function fetchRandomProfiles() {
+            const randomProfiles = [
+                'Antiskeppy', 'Pbsi', 'Speedyshan28'
+            ]; // Test Names change to API random later if wanted
+            const randomProfilesContainer = document.getElementById('randomProfiles');
+            
+            for (let name of randomProfiles) {
+                const profileCard = document.createElement('div');
+                profileCard.classList.add('profile-card');
+                profileCard.style = "background-color: black; padding: 15px; margin: 10px; border-radius: 10px; box-shadow: 0px 4px 10px grey; width: 150px; text-align: center;";
+
+                const profileSkin = document.createElement('img');
+                const uuidApiUrl = `https://api.minetools.eu/uuid/${name}`;
+                try {
+                    const uuidResponse = await fetch(uuidApiUrl);
+                    if (!uuidResponse.ok) throw new Error('Failed to fetch UUID');
+                    const uuidData = await uuidResponse.json();
+                    const playerUUID = uuidData.id;
+                    profileSkin.src = `https://crafatar.com/avatars/${playerUUID}?overlay`;
+                    profileSkin.alt = name;
+                    profileSkin.width = 50;
+                    profileSkin.height = 50;
+                    profileSkin.style = "border-radius: 5px; margin-bottom: 10px;";
+
+                    // Add the skin to the profile
+                    profileCard.appendChild(profileSkin);
+                    const nameElement = document.createElement('h4');
+                    nameElement.textContent = name;
+                    profileCard.appendChild(nameElement);
+
+                    // Add kill and death count
+                    const killsElement = document.createElement('p');
+                    const killsApiUrl = `https://api.antiskeppy.xyz/public/kills/${name}`;
+                    const deathsApiUrl = `https://api.antiskeppy.xyz/public/deaths/${name}`;
+                    try {
+                        const killsResponse = await fetch(killsApiUrl);
+                        const deathsResponse = await fetch(deathsApiUrl);
+                        if (killsResponse.ok && deathsResponse.ok) {
+                            const killsData = await killsResponse.json();
+                            const deathsData = await deathsResponse.json();
+                            killsElement.textContent = `Kills: ${killsData.kills || 0}`;
+                            profileCard.appendChild(killsElement);
+                            const deathsElement = document.createElement('p');
+                            deathsElement.textContent = `Deaths: ${deathsData.deaths || 0}`;
+                            profileCard.appendChild(deathsElement);
+                        }
+                    } catch (error) {
+                        console.error('Error fetching profile stats:', error);
+                    }
+
+                } catch (error) {
+                    console.error('Error fetching UUID for profile:', error);
+                }
+
+                // Add the profile card to the container
+                randomProfilesContainer.appendChild(profileCard);
+            }
+        }
+
+        async function fetchKillsAndSkin() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const name = urlParams.get('name');
+            if (!name) {
+                return;
+            }
+
+            const killsApiUrl = `https://api.antiskeppy.xyz/public/kills/${name}`;
+            const deathsApiUrl = `https://api.antiskeppy.xyz/public/deaths/${name}`;
+            const uuidApiUrl = `https://api.minetools.eu/uuid/${name}`;
+
+            try {
+                // Fetch player UUID
+                const uuidResponse = await fetch(uuidApiUrl);
+                if (!uuidResponse.ok) {
+                    throw new Error('Failed to fetch UUID');
+                }
+                const uuidData = await uuidResponse.json();
+                if (!uuidData.id) {
+                    throw new Error('Invalid Minecraft username');
+                }
+                const playerUUID = uuidData.id;
+
+                // Fetch death count
+                const deathsResponse = await fetch(deathsApiUrl);
+                if (!deathsResponse.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const deathsData = await deathsResponse.json();
+
+                // Fetch kill count
+                const killsResponse = await fetch(killsApiUrl);
+                if (!killsResponse.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const killsData = await killsResponse.json();
+
+                // Display the stats
+                document.getElementById('killCount').textContent = killsData.kills || '0';
+                document.getElementById('deathCount').textContent = deathsData.deaths || '0';
+                document.getElementById('name').textContent = name;
+                document.getElementById('playerSkin').src = `https://crafatar.com/avatars/${playerUUID}?overlay`;
+
+                // Show the stats section
+                document.getElementById('statsSection').style.display = 'block';
+                document.getElementById('statsHeader').style.display = 'block';
+                document.getElementById('playerSkin').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('killCount').textContent = 'Error';
+                document.getElementById('deathCount').textContent = 'Error';
+                document.getElementById('playerSkin').src = '';
+                document.getElementById('name').textContent = name;
+            }
+        }
+
+        // Fetch usernames for autocomplete
+        async function fetchUsernames() {
+            const usernamesApiUrl = 'https://api.antiskeppy.xyz/public/usernames'; //Need to change API for now its temp holder
+            try {
+                const response = await fetch(usernamesApiUrl);
+                if (response.ok) {
+                    const usernames = await response.json();
+                    const searchInput = document.getElementById('search');
+                    searchInput.setAttribute('list', 'usernames-list');
+                    const datalist = document.createElement('datalist');
+                    datalist.id = 'usernames-list';
+
+                    usernames.forEach((username) => {
+                        const option = document.createElement('option');
+                        option.value = username;
+                        datalist.appendChild(option);
+                    });
+
+                    document.body.appendChild(datalist);
+                } else {
+                    console.error('Failed to fetch usernames for autocomplete.');
+                }
+            } catch (error) {
+                console.error('Error fetching usernames:', error);
+            }
+        }
+
+        function handleSearch() {
+            const name = document.getElementById('search').value;
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('name', name);
+            window.history.replaceState({}, '', `${window.location.pathname}?${urlParams}`);
+            
+            // Clear randomProfiles when search happens :[]
+            document.getElementById('randomProfiles').innerHTML = '';
+
+            fetchKillsAndSkin();
+        }
+
+        window.onload = () => {
+            fetchRandomProfiles();  // Load randomProfiles on page load :/
+            fetchUsernames();
+            document.getElementById('statsSection').style.display = 'none'; 
+            document.getElementById('statsHeader').style.display = 'none'; 
+            document.getElementById('playerSkin').style.display = 'none'; 
+        }; //HIDE ALL STATS UNTIL SEARCHED FOR
+    </script>
+</head>
+
+<body style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; font-family: Arial, sans-serif; background-color: black; color: white; text-align: center; overflow-y: auto;">
+
+    <!--Top Nav Banner (Only Home Currently Works) -->
+    <div style="background-color: #222; width: 100%; padding: 15px 0; display: flex; justify-content: center; align-items: center; position: sticky; top: 0; z-index: 10;">
+        <a href="/" style="color: white; font-size: 1.2rem; text-decoration: none; margin: 0 20px;" onclick="window.location.reload();">Home</a>
+        <a href="/kill-leaderboard" style="color: white; font-size: 1.2rem; text-decoration: none; margin: 0 20px;" onclick="window.location.reload();">Coming Soon..</a> <!-- Kill Leaderboard -->
+        <a href="/death-leaderboard" style="color: white; font-size: 1.2rem; text-decoration: none; margin: 0 20px;" onclick="window.location.reload();">Coming Soon..</a> <!-- Death Leaderboard -->
+    </div>
+
+    <!-- Search Bar and Random Profiles Display -->
+    <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 20px; position: sticky; top: 60px; z-index: 9; background-color: black; padding: 10px 0;">
+        <input type="text" id="search" placeholder="Enter Minecraft username" style="padding: 10px; font-size: 1rem; width: 250px; margin-right: 10px; border-radius: 5px; border: 1px solid gray;">
+        <button onclick="handleSearch()" style="padding: 10px 15px; background-color: limegreen; color: white; border: none; border-radius: 5px; cursor: pointer;">Search</button> 
+    </div>
+    
+    <div id="randomProfiles" style="display: flex; flex-wrap: wrap; justify-content: center; margin-top: 20px; max-height: 400px; overflow-y: auto; width: 100%;">
+    </div>
+    
+    <h1 style="margin-bottom: 10px; font-size: 1.8rem; display: none;" id="statsHeader"><span id="name">Player</span>'s Stats</h1>
+    
+    <img id="playerSkin" alt="Player Skin" width="80" height="80" style="border-radius: 5px; margin-bottom: 15px; display: none;">
+    
+    <div id="statsSection" style="background: black; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 10px grey; width: 250px;">
+        <h3 style="margin: 5px 0;">Kill Count: <code style="font-weight: bold; color: limegreen;"><span id="killCount">Loading...</span></code></h3>
+        <h3 style="margin: 5px 0;">Death Count: <code style="font-weight: bold; color: red;"><span id="deathCount">Loading...</span></code></h3>
+    </div>
+
+</body>
+
+</html>
