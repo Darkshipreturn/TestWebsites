@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="https://pbsi.xyz/style.css">
+    <title>Kills Leaderboard</title>
+    <script>
+        const playerNames = ["iToxic", "Speedyshan28", "PBSI", "Antiskeppy", "player5", "Puppyofthevalley", "Skeppys_wife", "Cefmit", "Propsik_", "Player10"]; // Replace with actual player names
+
+        async function fetchPlayerKills(playerName) {
+            const apiUrl = `https://api.antiskeppy.xyz/public/kills/${playerName}`;
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    console.warn(`Failed to fetch data for ${playerName}`);
+                    return { name: playerName, kills: 0 }; // Default to 0 kills if request fails
+                }
+                const data = await response.json();
+                return { name: playerName, kills: data.kills || 0, uuid: data.uuid };
+            } catch (error) {
+                console.error(`Error fetching data for ${playerName}:`, error);
+                return { name: playerName, kills: 0 }; // Default to 0 kills if an error occurs
+            }
+        }
+
+        async function fetchKillsLeaderboard() {
+            const leaderboardContainer = document.getElementById('leaderboard');
+            leaderboardContainer.innerHTML = '<p>Loading leaderboard...</p>'; // Show loading message
+
+            const playerData = await Promise.all(playerNames.map(fetchPlayerKills));
+
+            // Sort players by kills in descending order and take the top 10
+            const topPlayers = playerData.sort((a, b) => b.kills - a.kills).slice(0, 10);
+
+            // Clear loading message
+            leaderboardContainer.innerHTML = '';
+
+            topPlayers.forEach((player, index) => {
+                const playerCard = document.createElement('div');
+                playerCard.classList.add('player-card');
+                playerCard.style = "background-color: #222; padding: 15px; margin: 10px; border-radius: 10px; box-shadow: 0px 4px 10px grey; width: 200px; text-align: center;";
+
+                const profileSkin = document.createElement('img');
+                profileSkin.src = `https://crafatar.com/avatars/${player.uuid}?overlay`;
+                profileSkin.alt = player.name;
+                profileSkin.width = 50;
+                profileSkin.height = 50;
+                profileSkin.style = "border-radius: 5px; margin-bottom: 10px;";
+                playerCard.appendChild(profileSkin);
+
+                const playerName = document.createElement('h4');
+                playerName.textContent = `${index + 1}. ${player.name}`;
+                playerCard.appendChild(playerName);
+
+                const playerKills = document.createElement('p');
+                playerKills.textContent = `Kills: ${player.kills}`;
+                playerCard.appendChild(playerKills);
+
+                leaderboardContainer.appendChild(playerCard);
+            });
+        }
+
+        window.onload = fetchKillsLeaderboard;
+    </script>
+</head>
+<body style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; font-family: Arial, sans-serif; background-color: black; color: white; text-align: center; overflow-y: auto;">
+
+    <!-- Top Nav Banner -->
+    <div style="background-color: #222; width: 100%; padding: 15px 0; display: flex; justify-content: center; align-items: center; position: sticky; top: 0; z-index: 10;">
+        <a href="index.html" style="color: white; font-size: 1.2rem; text-decoration: none; margin: 0 20px;">Home</a>
+        <a href="kill-leaderboard.html" style="color: white; font-size: 1.2rem; text-decoration: none; margin: 0 20px;">Kills Leaderboard</a>
+        <a href="index.html" style="color: white; font-size: 1.2rem; text-decoration: none; margin: 0 20px;">Coming Soon</a>
+    </div>
+
+    <h1 style="margin-bottom: 10px; font-size: 1.8rem;">Kills Leaderboard</h1>
+    
+    <div id="leaderboard" style="display: flex; flex-wrap: wrap; justify-content: center; margin-top: 20px; max-height: 600px; overflow-y: auto; width: 100%;"></div>
+
+</body>
+</html>
