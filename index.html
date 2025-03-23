@@ -12,7 +12,7 @@
             profileCard.style = "background-color: black; padding: 15px; margin: 10px; border-radius: 10px; box-shadow: 0px 4px 10px grey; width: 150px; text-align: center;";
             
             const profileSkin = document.createElement('img');
-            profileSkin.src = 'https://crafatar.com/avatars/00000000000000000000000000000000?overlay'; // Default avatar
+            profileSkin.src = 'https://crafatar.com/avatars/00000000-0000-0000-0000-000000000000?overlay'; // Default avatar placeholder
             profileSkin.alt = name;
             profileSkin.width = 50;
             profileSkin.height = 50;
@@ -33,25 +33,37 @@
 
             document.getElementById('randomProfiles').appendChild(profileCard);
             
-            fetch(`https://api.minetools.eu/uuid/${name}`)
-                .then(response => response.json())
-                .then(uuidData => {
+            try {
+                const uuidResponse = await fetch(`https://api.minetools.eu/uuid/${name}`);
+                if (uuidResponse.ok) {
+                    const uuidData = await uuidResponse.json();
                     if (uuidData.id) {
                         profileSkin.src = `https://crafatar.com/avatars/${uuidData.id}?overlay`;
                     }
-                }).catch(() => {});
+                }
+            } catch (error) {
+                console.error('Failed to load player skin:', error);
+            }
 
-            fetch(`https://api.antiskeppy.xyz/public/kills/${name}`)
-                .then(response => response.json())
-                .then(killsData => {
+            try {
+                const killsResponse = await fetch(`https://api.antiskeppy.xyz/public/kills/${name}`);
+                if (killsResponse.ok) {
+                    const killsData = await killsResponse.json();
                     killsElement.textContent = `Kills: ${killsData.kills || 0}`;
-                }).catch(() => { killsElement.textContent = 'Kills: N/A'; });
+                }
+            } catch (error) {
+                killsElement.textContent = 'Kills: N/A';
+            }
             
-            fetch(`https://api.antiskeppy.xyz/public/deaths/${name}`)
-                .then(response => response.json())
-                .then(deathsData => {
+            try {
+                const deathsResponse = await fetch(`https://api.antiskeppy.xyz/public/deaths/${name}`);
+                if (deathsResponse.ok) {
+                    const deathsData = await deathsResponse.json();
                     deathsElement.textContent = `Deaths: ${deathsData.deaths || 0}`;
-                }).catch(() => { deathsElement.textContent = 'Deaths: N/A'; });
+                }
+            } catch (error) {
+                deathsElement.textContent = 'Deaths: N/A';
+            }
         }
 
         function fetchRandomProfiles() {
