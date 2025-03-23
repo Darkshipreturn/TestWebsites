@@ -13,7 +13,9 @@
                 if (!response.ok) throw new Error("Failed to fetch players");
                 const data = await response.text();
                 console.log("Fetched players:", data);
-                const players = data.split(/\s+/).filter(player => player.trim() !== '');
+                
+                // Split by spaces and filter out empty entries
+                const players = data.split(' ').filter(player => player.trim() !== '');
                 return players;
             } catch (error) {
                 console.error("Error fetching player list:", error);
