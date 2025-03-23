@@ -7,7 +7,7 @@
     <title>Kills Leaderboard</title>
     <script>
         async function fetchAllPlayers() {
-            const apiUrl = "https://api.antiskeppy.xyz/public/players"; // Adjust API to get all players
+            const apiUrl = "https://api.antiskeppy.xyz/public/usernames"; // Adjust API to get all players
             try {
                 const response = await fetch(apiUrl);
                 if (!response.ok) throw new Error("Failed to fetch players");
