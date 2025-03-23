@@ -7,23 +7,23 @@
     <title>Kills Leaderboard</title>
     <script>
         async function fetchAllPlayers() {
-            const apiUrl = "https://api.antiskeppy.xyz/public/usernames"; // Adjust API to get all players
+            const apiUrl = "https://api.antiskeppy.xyz/public/usernames";
             try {
                 const response = await fetch(apiUrl);
                 if (!response.ok) throw new Error("Failed to fetch players");
                 const data = await response.text();
-                
-                // Ensure players are correctly parsed by splitting at spaces
+                console.log("Fetched players:", data);
                 const players = data.split(/\s+/).filter(player => player.trim() !== '');
                 return players;
             } catch (error) {
                 console.error("Error fetching player list:", error);
-                return []; 
+                displayError("Failed to load player list.");
+                return [];
             }
         }
 
         async function fetchPlayerKills(playerName) {
-            const encodedName = encodeURIComponent(playerName); // Ensure name is URL-safe
+            const encodedName = encodeURIComponent(playerName);
             const apiUrl = `https://api.antiskeppy.xyz/public/kills/${encodedName}`;
             try {
                 const response = await fetch(apiUrl);
@@ -38,13 +38,23 @@
 
         async function fetchKillsLeaderboard() {
             const leaderboardContainer = document.getElementById('leaderboard');
+            if (!leaderboardContainer) {
+                console.error("Leaderboard container not found!");
+                return;
+            }
             leaderboardContainer.innerHTML = '<p>Loading leaderboard...</p>';
-            
+
             const playerNames = await fetchAllPlayers();
+            if (playerNames.length === 0) return;
+
             const playerData = await Promise.all(playerNames.map(fetchPlayerKills));
-            
             const topPlayers = playerData.sort((a, b) => b.kills - a.kills).slice(0, 10);
             leaderboardContainer.innerHTML = '';
+
+            if (topPlayers.length === 0) {
+                displayError("No players found.");
+                return;
+            }
 
             topPlayers.forEach((player, index) => {
                 const playerCard = document.createElement('div');
@@ -69,6 +79,13 @@
 
                 leaderboardContainer.appendChild(playerCard);
             });
+        }
+
+        function displayError(message) {
+            const leaderboardContainer = document.getElementById('leaderboard');
+            if (leaderboardContainer) {
+                leaderboardContainer.innerHTML = `<p style='color: red;'>${message}</p>`;
+            }
         }
 
         window.onload = fetchKillsLeaderboard;
