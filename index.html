@@ -34,11 +34,19 @@
             document.getElementById('randomProfiles').appendChild(profileCard);
             
             try {
-                const uuidResponse = await fetch(`https://api.minetools.eu/uuid/${name}`);
+                // Check Java Edition UUID
+                let uuidResponse = await fetch(`https://api.ashcon.app/mojang/v2/user/${name}`);
                 if (uuidResponse.ok) {
-                    const uuidData = await uuidResponse.json();
-                    if (uuidData.id) {
-                        profileSkin.src = `https://crafatar.com/avatars/${uuidData.id}?overlay`;
+                    let uuidData = await uuidResponse.json();
+                    if (uuidData.uuid) {
+                        profileSkin.src = `https://crafatar.com/avatars/${uuidData.uuid}?overlay`;
+                    }
+                } else {
+                    // Check Bedrock Edition (uses external service)
+                    uuidResponse = await fetch(`https://playerdb.co/api/player/minecraft/${name}`);
+                    let bedrockData = await uuidResponse.json();
+                    if (bedrockData.success && bedrockData.data.player.id) {
+                        profileSkin.src = `https://mc-heads.net/avatar/${bedrockData.data.player.id}`;
                     }
                 }
             } catch (error) {
