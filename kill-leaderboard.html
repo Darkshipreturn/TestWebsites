@@ -12,7 +12,7 @@
                 const response = await fetch(apiUrl);
                 if (!response.ok) throw new Error("Failed to fetch players");
                 const data = await response.json();
-                return data.players || []; 
+                return data.players.map(player => player.trim()) || []; // Trim spaces
             } catch (error) {
                 console.error("Error fetching player list:", error);
                 return []; 
@@ -20,7 +20,8 @@
         }
 
         async function fetchPlayerKills(playerName) {
-            const apiUrl = `https://api.antiskeppy.xyz/public/kills/${playerName}`;
+            const encodedName = encodeURIComponent(playerName); // Ensure name is URL-safe
+            const apiUrl = `https://api.antiskeppy.xyz/public/kills/${encodedName}`;
             try {
                 const response = await fetch(apiUrl);
                 if (!response.ok) throw new Error("Failed to fetch data");
