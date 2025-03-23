@@ -11,8 +11,11 @@
             try {
                 const response = await fetch(apiUrl);
                 if (!response.ok) throw new Error("Failed to fetch players");
-                const data = await response.json();
-                return data.players.map(player => player.trim()) || []; // Trim spaces
+                const data = await response.text();
+                
+                // Ensure players are correctly parsed by splitting at spaces
+                const players = data.split(/\s+/).filter(player => player.trim() !== '');
+                return players;
             } catch (error) {
                 console.error("Error fetching player list:", error);
                 return []; 
