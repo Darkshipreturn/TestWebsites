@@ -9,11 +9,31 @@
         async function fetchTopKillers() {
             document.getElementById('leaderboard').innerHTML = '';
             try {
-                const response = await fetch('https://api.antiskeppy.xyz/public/topkills');
-                if (!response.ok) throw new Error('Failed to fetch leaderboard');
+                // Fetch all usernames
+                const usernameResponse = await fetch('https://api.antiskeppy.xyz/public/usernames');
+                if (!usernameResponse.ok) throw new Error('Failed to fetch usernames');
                 
-                const data = await response.json();
-                const topPlayers = data.leaderboard.slice(0, 10);
+                const usernameData = await usernameResponse.text();
+                const usernames = usernameData.split(' ');
+                
+                let playerStats = [];
+                
+                // Fetch kills for each username
+                for (const name of usernames) {
+                    try {
+                        const killsResponse = await fetch(`https://api.antiskeppy.xyz/public/kills/${name}`);
+                        if (killsResponse.ok) {
+                            const killsData = await killsResponse.json();
+                            playerStats.push({ name, kills: killsData.kills || 0 });
+                        }
+                    } catch (error) {
+                        console.error(`Error fetching kills for ${name}:`, error);
+                    }
+                }
+                
+                // Sort players by kills in descending order and take the top 10
+                playerStats.sort((a, b) => b.kills - a.kills);
+                const topPlayers = playerStats.slice(0, 10);
                 
                 topPlayers.forEach((player, index) => {
                     const profileCard = document.createElement('div');
@@ -21,7 +41,7 @@
                     profileCard.style = "background-color: black; padding: 15px; margin: 10px; border-radius: 10px; box-shadow: 0px 4px 10px grey; width: 150px; text-align: center;";
                     
                     const profileSkin = document.createElement('img');
-                    profileSkin.src = `https://crafatar.com/avatars/${player.uuid}?overlay`;
+                    profileSkin.src = `https://crafatar.com/avatars/00000000-0000-0000-0000-000000000000?overlay`;
                     profileSkin.alt = player.name;
                     profileSkin.width = 50;
                     profileSkin.height = 50;
